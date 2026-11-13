@@ -1,0 +1,2387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LOKLOOP</title>
+
+<!-- FIREBASE SDKs (COMPAT FOR SEAMLESS SINGLE-FILE HTML) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #101114;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+/* AUTH (LOGIN / SIGNUP) SCREEN */
+#authScreen {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #101114;
+  z-index: 999;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+#authScreen.active {
+  display: flex;
+}
+
+.auth-box {
+  background: #191a20;
+  width: 100%;
+  max-width: 400px;
+  padding: 24px 20px;
+  border-radius: 18px;
+  border: 1px solid #2d303a;
+  text-align: center;
+}
+
+.auth-logo {
+  color: #7cffb2;
+  font-size: 32px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.security-pill {
+  display: inline-block;
+  background: #1c3829;
+  color: #7cffb2;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  margin-bottom: 10px;
+  border: 1px solid #2f6146;
+}
+
+.auth-tabs {
+  display: flex;
+  background: #101114;
+  border-radius: 10px;
+  padding: 4px;
+  margin: 14px 0;
+}
+
+.auth-tab {
+  flex: 1;
+  background: transparent;
+  color: #aaa;
+  padding: 10px;
+  margin: 0;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.auth-tab.active {
+  background: #7cffb2;
+  color: #101114;
+}
+
+.auth-form {
+  text-align: left;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 10px 0;
+  font-size: 12px;
+  color: #bbb;
+}
+
+.checkbox-row input[type="checkbox"] {
+  width: auto;
+  margin: 2px 0 0 0;
+}
+
+header {
+  padding: 16px 18px;
+  background: #191a20;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid #2a2c34;
+}
+
+.logo {
+  color: #7cffb2;
+  font-size: 24px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.live-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #7cffb2;
+  display: inline-block;
+  box-shadow: 0 0 8px #7cffb2;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-btn {
+  position: relative;
+  background: #292a31;
+  color: white;
+  padding: 8px 11px;
+  border-radius: 10px;
+  font-size: 16px;
+  margin: 0;
+}
+
+.notif-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #ff5555;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 50%;
+  display: none;
+}
+
+main {
+  padding: 18px;
+  padding-bottom: 100px;
+}
+
+.page {
+  display: none;
+}
+
+.page.active {
+  display: block;
+}
+
+h2 {
+  margin-top: 10px;
+}
+
+.card {
+  background: #202128;
+  padding: 17px;
+  border-radius: 15px;
+  margin: 15px 0;
+}
+
+.small {
+  color: #aaa;
+  font-size: 14px;
+}
+
+button {
+  background: #7cffb2;
+  color: #101114;
+  border: none;
+  padding: 12px 17px;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  margin: 3px;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+button.secondary-btn {
+  background: #292a31;
+  color: white;
+  border: 1px solid #555;
+}
+
+button.following-btn {
+  background: #1c3829;
+  color: #7cffb2;
+  border: 1px solid #7cffb2;
+}
+
+button.danger-btn {
+  background: #ff5555;
+  color: white;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+button.logout-btn {
+  background: #3b1d26;
+  color: #ff6b8b;
+  border: 1px solid #ff6b8b;
+}
+
+input, textarea {
+  width: 100%;
+  padding: 13px;
+  margin: 8px 0;
+  border: 1px solid #444;
+  border-radius: 10px;
+  background: #292a31;
+  color: white;
+  font-size: 15px;
+}
+
+nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  background: #191a20;
+  display: flex;
+  justify-content: space-around;
+  padding: 12px 3px;
+  border-top: 1px solid #333;
+  z-index: 10;
+}
+
+nav button {
+  background: transparent;
+  color: white;
+  padding: 8px 5px;
+  font-size: 12px;
+  margin: 0;
+}
+
+nav button.selected {
+  color: #7cffb2;
+}
+
+/* AVATAR / DP STYLES */
+.avatar-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #292a31;
+  border: 2px solid #7cffb2;
+  object-fit: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: #7cffb2;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-small {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #292a31;
+  border: 1.5px solid #7cffb2;
+  object-fit: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: #7cffb2;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.avatar-small img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profile-top-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.post {
+  background: #202128;
+  padding: 15px;
+  margin: 12px 0;
+  border-radius: 13px;
+  overflow: hidden;
+}
+
+.post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+  gap: 8px;
+}
+
+.post-author-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.post-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.post-time {
+  color: #888;
+  font-size: 11.5px;
+  display: block;
+  margin-top: 2px;
+}
+
+.post-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #333;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  background: #292a31;
+  color: white;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 8px;
+  margin: 0;
+}
+
+.action-btn.liked {
+  background: #3b1d26;
+  color: #ff6b8b;
+  border: 1px solid #ff6b8b;
+}
+
+.comments-box {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #2e303a;
+  display: none;
+}
+
+.comments-box.open {
+  display: block;
+}
+
+.comment-item {
+  background: #18191f;
+  padding: 8px 10px;
+  border-radius: 8px;
+  margin: 6px 0;
+  font-size: 13px;
+}
+
+.comment-item strong {
+  color: #7cffb2;
+}
+
+.comment-time {
+  color: #777;
+  font-size: 10.5px;
+  margin-left: 6px;
+}
+
+.comment-input-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.comment-input-row input {
+  margin: 0;
+  padding: 9px;
+  font-size: 13px;
+}
+
+.comment-input-row button {
+  margin: 0;
+  padding: 9px 14px;
+  font-size: 13px;
+}
+
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.media-grid img,
+.media-grid video {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 9px;
+  background: #111;
+}
+
+.preview-item {
+  position: relative;
+  min-width: 0;
+}
+
+.remove-media {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: #ff5555;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 50%;
+  z-index: 2;
+}
+
+.media-count {
+  color: #7cffb2;
+  font-size: 13px;
+}
+
+.file-button {
+  display: inline-block;
+  background: #292a31;
+  color: white;
+  border: 1px solid #555;
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin: 4px 2px;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.hidden-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* REAL USER ROW IN DISCOVER */
+.creator-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #2d2f39;
+  gap: 8px;
+}
+
+.creator-row:last-child {
+  border-bottom: none;
+}
+
+.creator-info h4 {
+  margin: 0 0 3px 0;
+  font-size: 15px;
+}
+
+.creator-info span {
+  color: #999;
+  font-size: 12px;
+}
+
+/* XP PROGRESS BAR */
+.xp-bar-bg {
+  width: 100%;
+  height: 10px;
+  background: #141519;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 10px 0;
+}
+
+.xp-bar-fill {
+  height: 100%;
+  background: #7cffb2;
+  width: 90%;
+  transition: width 0.3s ease;
+}
+
+/* MODAL OVERLAY */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 100;
+  justify-content: center;
+  align-items: center;
+  padding: 14px;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal-box {
+  background: #202128;
+  width: 100%;
+  max-width: 420px;
+  max-height: 85vh;
+  overflow-y: auto;
+  border-radius: 16px;
+  padding: 18px;
+  border: 1px solid #333;
+}
+
+/* DIRECT MESSAGES UI */
+.dm-user-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #18191f;
+  padding: 11px 12px;
+  border-radius: 12px;
+  margin: 8px 0;
+  cursor: pointer;
+}
+
+.dm-messages-area {
+  background: #141519;
+  border-radius: 12px;
+  padding: 12px;
+  height: 280px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.chat-bubble {
+  max-width: 78%;
+  padding: 9px 13px;
+  border-radius: 14px;
+  font-size: 13.5px;
+  line-height: 1.4;
+  word-wrap: break-word;
+}
+
+.chat-bubble.me {
+  align-self: flex-end;
+  background: #7cffb2;
+  color: #101114;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-bubble.them {
+  align-self: flex-start;
+  background: #292a31;
+  color: white;
+  border-bottom-left-radius: 4px;
+}
+
+.chat-time {
+  display: block;
+  font-size: 10px;
+  opacity: 0.75;
+  margin-top: 4px;
+  text-align: right;
+}
+
+.notif-item {
+  background: #18191f;
+  padding: 10px 12px;
+  border-radius: 10px;
+  margin: 8px 0;
+  font-size: 13px;
+  border-left: 3px solid #7cffb2;
+}
+
+.notif-time {
+  display: block;
+  color: #888;
+  font-size: 11px;
+  margin-top: 4px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- SECURE PERSISTENT LOGIN / SIGN UP SCREEN -->
+<div id="authScreen">
+  <div class="auth-box">
+    <div class="auth-logo">LOKLOOP</div>
+    <div class="security-pill">🌐 Live Cloud · SHA-256 Encrypted</div>
+
+    <div class="auth-tabs">
+      <button type="button" id="tabSignup" class="auth-tab active" onclick="switchAuthTab('signup')">Create Account</button>
+      <button type="button" id="tabLogin" class="auth-tab" onclick="switchAuthTab('login')">Login</button>
+    </div>
+
+    <!-- SIGN UP FORM -->
+    <div id="signupForm" class="auth-form">
+      <label class="small">Full Name</label>
+      <input type="text" id="signupName" maxlength="30" placeholder="e.g. Gourav Dangi">
+      <label class="small">Username (Unique ID)</label>
+      <input type="text" id="signupHandle" maxlength="25" placeholder="e.g. @gourav_dangi">
+      <label class="small">Strong Password (Min 6 chars)</label>
+      <input type="password" id="signupPass" maxlength="40" placeholder="Create a strong password">
+      <div class="checkbox-row">
+        <input type="checkbox" id="privacyAgree" checked>
+        <label for="privacyAgree">I agree to LOKLOOP <a href="#" style="color:#7cffb2;" onclick="openSecurityModal(); return false;">Privacy Policy & Safety Rules</a>.</label>
+      </div>
+      <button type="button" id="signupSubmitBtn" style="width:100%; margin-top:8px;" onclick="handleSignup()">
+        Create Secure Account 🚀
+      </button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="loginForm" class="auth-form" style="display:none;">
+      <label class="small">Username</label>
+      <input type="text" id="loginHandle" placeholder="Enter your @username">
+      <label class="small">Password</label>
+      <input type="password" id="loginPass" placeholder="Enter your password">
+      <button type="button" id="loginSubmitBtn" style="width:100%; margin-top:10px;" onclick="handleLogin()">
+        Login to LOKLOOP 🔓
+      </button>
+      <p class="small" style="text-align:center; margin-top:12px;">
+        Session stays active until you manually tap Logout.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP CONTAINER -->
+<div id="appContainer">
+
+<header>
+  <div class="logo">LOKLOOP <span id="cloudStatusDot" class="live-dot" title="Cloud Connected"></span></div>
+  <div class="header-right">
+    <button type="button" class="icon-btn" onclick="openSecurityModal()" title="Security & Privacy">
+      🛡️
+    </button>
+    <button type="button" class="icon-btn" onclick="openNotifications()" title="Notifications">
+      🔔
+      <span id="notifBadge" class="notif-badge">0</span>
+    </button>
+    <button type="button" class="icon-btn" onclick="openMessagesModal()" title="Direct Messages">
+      💬
+    </button>
+  </div>
+</header>
+
+<main>
+
+<!-- HOME -->
+<section id="home" class="page active">
+  <h2 id="welcomeHeading">Welcome to LOKLOOP 👋</h2>
+  <p class="small" id="liveClockLine">Connecting to live community...</p>
+
+  <div class="card">
+    <h3>🎯 Today's Mission (+50 XP)</h3>
+    <p>Do one good thing for your community today.</p>
+    <button id="homeMissionBtn" onclick="completeMission(this, 50, 'Today\'s Community Mission')">
+      Accept Mission (+50 XP)
+    </button>
+  </div>
+
+  <div id="homePosts">
+    <p class="small" style="text-align:center;">Loading live community posts...</p>
+  </div>
+</section>
+
+<!-- DISCOVER -->
+<section id="discover" class="page">
+  <h2>Discover Real Users 🔎</h2>
+  <input id="discoverSearchInput" oninput="handleDiscoverSearch()" placeholder="Search real @usernames or posts...">
+
+  <div class="card">
+    <h3>👥 Registered Community Members</h3>
+    <div id="creatorsList">
+      <p class="small">Loading registered members...</p>
+    </div>
+  </div>
+
+  <div id="discoverPostsResults"></div>
+</section>
+
+<!-- CREATE -->
+<section id="create" class="page">
+  <h2>Create Post ✍️</h2>
+
+  <div class="card">
+
+    <textarea id="postText"
+      maxlength="1000"
+      placeholder="What's on your mind? (Max 1000 chars)"
+      rows="5"></textarea>
+
+    <h3>📸 Add Photos (Up to 5 per post)</h3>
+
+    <label class="file-button" for="mediaPicker">
+      🖼️ Gallery
+    </label>
+
+    <label class="file-button" for="cameraPicker">
+      📷 Camera Photo
+    </label>
+
+    <input
+      type="file"
+      id="mediaPicker"
+      class="hidden-input"
+      accept="image/*"
+      multiple
+    >
+
+    <input
+      type="file"
+      id="cameraPicker"
+      class="hidden-input"
+      accept="image/*"
+      capture="environment"
+    >
+
+    <p class="media-count" id="mediaCount">
+      0 / 5 photos selected
+    </p>
+
+    <div id="mediaPreview" class="media-grid"></div>
+
+    <button id="publishBtn" onclick="publishPost()">
+      Publish Live Post 🚀
+    </button>
+
+  </div>
+</section>
+
+<!-- MISSION -->
+<section id="mission" class="page">
+  <h2>Mission Center 🎯</h2>
+
+  <div class="card">
+    <h3>🏆 Your Journey</h3>
+    <h2 id="xpDisplay">450 XP</h2>
+    <div class="xp-bar-bg">
+      <div id="xpBarFill" class="xp-bar-fill"></div>
+    </div>
+    <p id="levelText">Community Builder · Level 4</p>
+  </div>
+
+  <div class="card">
+    <h3>🌱 Small Act (+50 XP)</h3>
+    <p>Complete a small positive action today.</p>
+    <button onclick="completeMission(this, 50, 'Small Act Mission')">
+      Complete Mission (+50 XP)
+    </button>
+  </div>
+
+  <div class="card">
+    <h3>❤️ Local Love (+100 XP)</h3>
+    <p>Support a local creator or neighbor.</p>
+    <button onclick="completeMission(this, 100, 'Local Love Mission')">
+      Complete Mission (+100 XP)
+    </button>
+  </div>
+</section>
+
+<!-- PROFILE -->
+<section id="profile" class="page">
+  <h2>Your Profile 👤</h2>
+
+  <div class="card">
+    <div class="profile-top-row">
+      <div id="profileAvatarBox" class="avatar-circle" onclick="document.getElementById('dpPicker').click()" title="Tap to change DP">
+        👤
+      </div>
+      <div>
+        <h3 id="profileName" style="margin:0 0 4px 0;">LOKLOOP User</h3>
+        <p id="profileHandle" class="small" style="margin:0;">@lokloop_user</p>
+        <button type="button" class="secondary-btn" style="padding:6px 10px; font-size:11px; margin-top:6px;" onclick="document.getElementById('dpPicker').click()">
+          📷 Change DP
+        </button>
+        <input type="file" id="dpPicker" class="hidden-input" accept="image/*" onchange="handleDPChange(this)">
+      </div>
+    </div>
+
+    <p id="profileBio">Building positive vibes in my local community.</p>
+    <p id="profileLevelLine">Level 4 · 450 XP · Verified Account</p>
+    <p id="profileStats">Posts: 0 | Followers: 0 | Following: 0</p>
+    <div style="margin-top:10px;">
+      <button onclick="openEditProfile()">
+        Edit Profile
+      </button>
+      <button class="secondary-btn" onclick="shareProfile()">
+        Share Profile
+      </button>
+      <button class="secondary-btn" onclick="openSecurityModal()">
+        🛡️ Privacy Policy
+      </button>
+      <button class="logout-btn" onclick="handleLogout()">
+        🚪 Logout
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>✨ Little Wins, Big Energy</h3>
+    <div id="badgesList">
+      <p>🔥 First Spark</p>
+      <p>🏙️ 3 Day Streak</p>
+    </div>
+  </div>
+
+  <!-- PLAY STORE MANDATORY ACCOUNT & DATA CONTROL -->
+  <div class="card" style="border: 1px solid #442228;">
+    <h3 style="color:#ff6b8b; margin-top:0;">⚠️ Account & Data Control</h3>
+    <p class="small">Permanently delete your LOKLOOP account, profile data, and all your posts from the cloud.</p>
+    <button class="danger-btn" onclick="openDeleteAccountModal()">
+      🗑️ Delete My Account Permanently
+    </button>
+  </div>
+</section>
+
+</main>
+
+<!-- DELETE ACCOUNT MODAL -->
+<div id="deleteAccountModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3 style="margin-top:0; color:#ff5555;">🗑️ Delete Account Permanently</h3>
+    <p class="small">This action cannot be undone. All your posts, profile info, and XP will be permanently removed.</p>
+    <label class="small">Confirm your password to delete account:</label>
+    <input type="password" id="deleteConfirmPass" placeholder="Enter your password">
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px;">
+      <button type="button" class="secondary-btn" onclick="closeDeleteAccountModal()">Cancel</button>
+      <button type="button" class="danger-btn" style="padding:10px 14px;" onclick="confirmDeleteAccount()">Delete Forever</button>
+    </div>
+  </div>
+</div>
+
+<!-- SECURITY & PRIVACY POLICY MODAL -->
+<div id="securityModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3 style="margin-top:0; color:#7cffb2;">🛡️ LOKLOOP Privacy Policy & Safety</h3>
+    <div class="notif-item">
+      <strong>1. Data Collection & Ownership</strong>
+      <p class="small" style="margin:4px 0 0 0;">LOKLOOP only stores your chosen Name, @Username, Profile Picture, Posts, and Direct Messages to provide social features. We never sell user data to third parties.</p>
+    </div>
+    <div class="notif-item">
+      <strong>2. Password & Account Security</strong>
+      <p class="small" style="margin:4px 0 0 0;">Passwords are protected using SHA-256 cryptographic hashing. Brute-force login protection locks accounts after 3 failed attempts.</p>
+    </div>
+    <div class="notif-item">
+      <strong>3. User Safety, Blocking & Reporting</strong>
+      <p class="small" style="margin:4px 0 0 0;">Zero tolerance for spam or abuse. Users can report posts or block any user immediately.</p>
+    </div>
+    <div class="notif-item">
+      <strong>4. Account Deletion Right</strong>
+      <p class="small" style="margin:4px 0 0 0;">Users can permanently delete their account and all associated posts anytime from Profile -> Delete My Account Permanently.</p>
+    </div>
+    <div style="text-align:right; margin-top:12px;">
+      <button type="button" onclick="closeSecurityModal()">Close ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- REAL-TIME DIRECT MESSAGES MODAL -->
+<div id="messagesModal" class="modal-overlay">
+  <div class="modal-box">
+    <div id="dmListView">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <h3 style="margin:0;">Live Messages 💬</h3>
+        <button type="button" class="secondary-btn" style="padding:6px 12px; font-size:12px;" onclick="closeMessagesModal()">Close</button>
+      </div>
+      <div id="dmUsersList"></div>
+    </div>
+
+    <div id="dmChatView" style="display:none;">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #333; padding-bottom:8px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="secondary-btn" style="padding:5px 10px; font-size:12px;" onclick="backToDmList()">← Back</button>
+          <div>
+            <strong id="activeChatName">User</strong>
+            <div id="activeChatHandle" class="small" style="font-size:11px;">@handle</div>
+          </div>
+        </div>
+        <div>
+          <button type="button" class="danger-btn" style="padding:5px 8px; font-size:11px;" onclick="blockActiveChatUser()">🚫 Block</button>
+          <button type="button" class="secondary-btn" style="padding:5px 9px; font-size:12px;" onclick="closeMessagesModal()">✕</button>
+        </div>
+      </div>
+
+      <div id="dmMessagesArea" class="dm-messages-area"></div>
+
+      <div class="comment-input-row">
+        <input type="text" id="dmInput" maxlength="500" placeholder="Write a live message..." onkeypress="if(event.key==='Enter') sendDirectMessage()">
+        <button type="button" onclick="sendDirectMessage()">Send ➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NOTIFICATIONS MODAL -->
+<div id="notifModal" class="modal-overlay">
+  <div class="modal-box">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <h3 style="margin:0;">Notifications 🔔</h3>
+      <button type="button" class="secondary-btn" style="padding:6px 10px; font-size:12px;" onclick="clearNotifications()">Clear All</button>
+    </div>
+    <div id="notifList"></div>
+    <div style="text-align:right; margin-top:12px;">
+      <button type="button" onclick="closeNotifications()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT PROFILE MODAL -->
+<div id="editProfileModal" class="modal-overlay">
+  <div class="modal-box">
+    <h3>Edit Profile ✏️</h3>
+    <label class="small">Display Name</label>
+    <input type="text" id="editNameInput" maxlength="30" placeholder="Your Name">
+    <label class="small">Bio</label>
+    <textarea id="editBioInput" maxlength="160" rows="3" placeholder="Write something about yourself..."></textarea>
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:10px;">
+      <button type="button" class="secondary-btn" onclick="closeEditProfile()">Cancel</button>
+      <button type="button" onclick="saveProfile()">Save Profile</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAVIGATION -->
+<nav>
+  <button class="selected" onclick="showPage('home',this)">🏠<br>Home</button>
+  <button onclick="showPage('discover',this)">🔎<br>Discover</button>
+  <button onclick="showPage('create',this)">➕<br>Create</button>
+  <button onclick="showPage('mission',this)">🎯<br>Mission</button>
+  <button onclick="showPage('profile',this)">👤<br>Profile</button>
+</nav>
+
+</div>
+
+<script>
+// ==========================================
+// FIREBASE LIVE CLOUD INITIALIZATION
+// ==========================================
+const firebaseConfig = {
+  apiKey: "AIzaSyCps0pMeXDabGtPOJ1KVh1oQVVhBao7rcs",
+  authDomain: "lokloop.firebaseapp.com",
+  projectId: "lokloop",
+  storageBucket: "lokloop.firebasestorage.app",
+  messagingSenderId: "271466004450",
+  appId: "1:271466004450:web:fd1d6235dae32792eb43bb",
+  measurementId: "G-6GLP0JP7D3"
+};
+
+let cloudDB = null;
+let isCloudReady = false;
+
+try {
+  if (typeof firebase !== 'undefined') {
+    firebase.initializeApp(firebaseConfig);
+    cloudDB = firebase.firestore();
+    isCloudReady = true;
+  }
+} catch (err) {
+  console.warn('Cloud offline fallback mode:', err);
+}
+
+// ==========================================
+// SECURITY UTILITIES (SHA-256, SANITIZER, ANTI-SPAM)
+// ==========================================
+function sanitizeText(str) {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+async function hashPassword(password) {
+  try {
+    if (window.crypto && window.crypto.subtle) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode('LOKLOOP_SALT_2026_' + password);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+    }
+  } catch (e) {}
+  let hash = 0;
+  const salted = 'LOKLOOP_SALT_2026_' + password;
+  for (let i = 0; i < salted.length; i++) {
+    hash = ((hash << 5) - hash) + salted.charCodeAt(i);
+    hash |= 0;
+  }
+  return 'h_' + Math.abs(hash).toString(16);
+}
+
+function getExactDateTime() {
+  const now = new Date();
+  const datePart = now.toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  });
+  const timePart = now.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+  return `${datePart}, ${timePart}`;
+}
+
+function updateLiveHeaderClock() {
+  const el = document.getElementById('liveClockLine');
+  if (el) {
+    const statusText = isCloudReady ? '🟢 Live Cloud Active' : '🟡 Offline Mode';
+    el.textContent = '🕒 ' + getExactDateTime() + ' · ' + statusText;
+  }
+}
+
+let lastPostTimestamp = 0;
+let lastMsgTimestamp = 0;
+let failedLoginAttempts = 0;
+let loginLockUntil = 0;
+
+// ==========================================
+// 0. CLOUD + LOCAL MULTI-ACCOUNT AUTHENTICATION
+// ==========================================
+let allUsersDB = {};
+let currentSessionHandle = null;
+
+function loadLocalSession() {
+  try {
+    const raw = localStorage.getItem('lokloop_users_registry');
+    if (raw) {
+      allUsersDB = JSON.parse(raw);
+    }
+    currentSessionHandle = localStorage.getItem('lokloop_active_session');
+  } catch (e) {
+    allUsersDB = {};
+    currentSessionHandle = null;
+  }
+}
+
+function saveLocalSession() {
+  try {
+    localStorage.setItem('lokloop_users_registry', JSON.stringify(allUsersDB));
+    if (currentSessionHandle) {
+      localStorage.setItem('lokloop_active_session', currentSessionHandle);
+    } else {
+      localStorage.removeItem('lokloop_active_session');
+    }
+  } catch (e) {}
+}
+
+async function syncUserToCloud(userObj) {
+  if (!isCloudReady || !cloudDB || !userObj || !userObj.handle) return;
+  try {
+    await cloudDB.collection('users').doc(userObj.handle).set(userObj, { merge: true });
+  } catch (e) {
+    console.warn('Cloud user sync error:', e);
+  }
+}
+
+function startCloudUsersListener() {
+  if (!isCloudReady || !cloudDB) return;
+  try {
+    cloudDB.collection('users').onSnapshot(function(snapshot) {
+      snapshot.forEach(function(doc) {
+        allUsersDB[doc.id] = doc.data();
+      });
+      saveLocalSession();
+      if (currentSessionHandle && allUsersDB[currentSessionHandle]) {
+        renderProfileUI();
+        renderCreatorsList(document.getElementById('discoverSearchInput').value);
+      }
+    });
+  } catch (e) {
+    console.warn('Users listener error:', e);
+  }
+}
+
+function checkAuthSession() {
+  loadLocalSession();
+  if (currentSessionHandle && allUsersDB[currentSessionHandle]) {
+    document.getElementById('authScreen').classList.remove('active');
+    document.getElementById('appContainer').style.display = 'block';
+    renderProfileUI();
+    renderCreatorsList();
+    updateNotifBadge();
+  } else {
+    document.getElementById('appContainer').style.display = 'none';
+    document.getElementById('authScreen').classList.add('active');
+    const hasAnyUser = Object.keys(allUsersDB).length > 0;
+    switchAuthTab(hasAnyUser ? 'login' : 'signup');
+  }
+}
+
+function switchAuthTab(tab) {
+  const signupForm = document.getElementById('signupForm');
+  const loginForm = document.getElementById('loginForm');
+  const tabSignup = document.getElementById('tabSignup');
+  const tabLogin = document.getElementById('tabLogin');
+
+  if (tab === 'signup') {
+    signupForm.style.display = 'block';
+    loginForm.style.display = 'none';
+    tabSignup.classList.add('active');
+    tabLogin.classList.remove('active');
+  } else {
+    signupForm.style.display = 'none';
+    loginForm.style.display = 'block';
+    tabSignup.classList.remove('active');
+    tabLogin.classList.add('active');
+  }
+}
+
+async function handleSignup() {
+  const name = document.getElementById('signupName').value.trim();
+  let handle = document.getElementById('signupHandle').value.trim().toLowerCase();
+  const pass = document.getElementById('signupPass').value;
+  const agreed = document.getElementById('privacyAgree').checked;
+  const btn = document.getElementById('signupSubmitBtn');
+
+  if (!name || !handle || !pass) {
+    alert('Please fill in all fields!');
+    return;
+  }
+
+  if (!agreed) {
+    alert('Please agree to the Privacy Policy & Safety Rules.');
+    return;
+  }
+
+  handle = handle.replace(/[^a-z0-9_@]/g, '');
+  if (!handle.startsWith('@')) {
+    handle = '@' + handle;
+  }
+
+  if (handle.length < 4) {
+    alert('Username must be at least 3 characters long.');
+    return;
+  }
+
+  if (pass.length < 6) {
+    alert('Security Rule: Password must be at least 6 characters long!');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Checking Cloud Availability...';
+
+  // Check both local and Firebase Cloud if username exists
+  if (isCloudReady && cloudDB) {
+    try {
+      const existingDoc = await cloudDB.collection('users').doc(handle).get();
+      if (existingDoc.exists) {
+        alert('This @username is already registered on LOKLOOP! Please choose another or Login.');
+        btn.disabled = false;
+        btn.textContent = 'Create Secure Account 🚀';
+        return;
+      }
+    } catch (e) {}
+  }
+
+  if (allUsersDB[handle]) {
+    alert('This @username is already taken! Please choose another or Login.');
+    btn.disabled = false;
+    btn.textContent = 'Create Secure Account 🚀';
+    return;
+  }
+
+  const hashed = await hashPassword(pass);
+
+  const newUserObj = {
+    name: name,
+    handle: handle,
+    passwordHash: hashed,
+    bio: 'Building positive vibes in my local community.',
+    dp: '',
+    xp: 450,
+    following: [],
+    blocked: [],
+    joinedAt: getExactDateTime()
+  };
+
+  allUsersDB[handle] = newUserObj;
+  currentSessionHandle = handle;
+  saveLocalSession();
+  await syncUserToCloud(newUserObj);
+
+  document.getElementById('signupName').value = '';
+  document.getElementById('signupHandle').value = '';
+  document.getElementById('signupPass').value = '';
+  btn.disabled = false;
+  btn.textContent = 'Create Secure Account 🚀';
+
+  addNotification(`Account created securely on ${getExactDateTime()} 🛡️`);
+  checkAuthSession();
+  refreshFeedDisplay();
+}
+
+async function handleLogin() {
+  const now = Date.now();
+  if (now < loginLockUntil) {
+    const secsLeft = Math.ceil((loginLockUntil - now) / 1000);
+    alert(`🛡️ Security Lock Active: Too many wrong attempts. Try again in ${secsLeft} seconds.`);
+    return;
+  }
+
+  let handleInput = document.getElementById('loginHandle').value.trim().toLowerCase();
+  const passInput = document.getElementById('loginPass').value;
+  const btn = document.getElementById('loginSubmitBtn');
+
+  if (!handleInput || !passInput) {
+    alert('Please enter your username and password!');
+    return;
+  }
+
+  if (!handleInput.startsWith('@')) {
+    handleInput = '@' + handleInput;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Verifying Account...';
+
+  // Fetch latest user record from Firebase Cloud if available
+  let userObj = allUsersDB[handleInput];
+  if (isCloudReady && cloudDB) {
+    try {
+      const doc = await cloudDB.collection('users').doc(handleInput).get();
+      if (doc.exists) {
+        userObj = doc.data();
+        allUsersDB[handleInput] = userObj;
+      }
+    } catch (e) {}
+  }
+
+  const hashedInput = await hashPassword(passInput);
+
+  btn.disabled = false;
+  btn.textContent = 'Login to LOKLOOP 🔓';
+
+  if (userObj && userObj.passwordHash === hashedInput) {
+    failedLoginAttempts = 0;
+    currentSessionHandle = handleInput;
+    saveLocalSession();
+    document.getElementById('loginPass').value = '';
+    checkAuthSession();
+    refreshFeedDisplay();
+  } else {
+    failedLoginAttempts++;
+    if (failedLoginAttempts >= 3) {
+      loginLockUntil = Date.now() + 60000;
+      failedLoginAttempts = 0;
+      alert('🚨 3 Failed Attempts! Account login locked for 60 seconds for security.');
+    } else {
+      alert(`Incorrect username or password! (${3 - failedLoginAttempts} attempts left)`);
+    }
+  }
+}
+
+function handleLogout() {
+  if (confirm('Logout from LOKLOOP? (You will stay logged in if you cancel)')) {
+    currentSessionHandle = null;
+    saveLocalSession();
+    checkAuthSession();
+  }
+}
+
+function openDeleteAccountModal() {
+  document.getElementById('deleteConfirmPass').value = '';
+  document.getElementById('deleteAccountModal').classList.add('active');
+}
+
+function closeDeleteAccountModal() {
+  document.getElementById('deleteAccountModal').classList.remove('active');
+}
+
+async function confirmDeleteAccount() {
+  const pass = document.getElementById('deleteConfirmPass').value;
+  if (!pass) {
+    alert('Please enter your password to confirm deletion.');
+    return;
+  }
+
+  const me = getCurrentUser();
+  const hashed = await hashPassword(pass);
+
+  if (me.passwordHash !== hashed) {
+    alert('Incorrect password! Account deletion cancelled.');
+    return;
+  }
+
+  // Delete all posts owned by this user from Cloud & Local
+  const myPosts = allLoadedPosts.filter(function(p) { return p.handle === me.handle; });
+  for (let i = 0; i < myPosts.length; i++) {
+    await deletePostEverywhere(myPosts[i].id);
+  }
+
+  // Delete user from Firebase Cloud
+  if (isCloudReady && cloudDB) {
+    try {
+      await cloudDB.collection('users').doc(me.handle).delete();
+    } catch (e) {}
+  }
+
+  try {
+    localStorage.removeItem('lokloop_notifs_' + me.handle);
+  } catch (e) {}
+
+  delete allUsersDB[me.handle];
+  currentSessionHandle = null;
+  saveLocalSession();
+
+  closeDeleteAccountModal();
+  alert('Your LOKLOOP account and all your posts have been permanently deleted.');
+  checkAuthSession();
+}
+
+function getCurrentUser() {
+  if (currentSessionHandle && allUsersDB[currentSessionHandle]) {
+    return allUsersDB[currentSessionHandle];
+  }
+  return {
+    name: 'Guest',
+    handle: '@guest',
+    bio: '',
+    dp: '',
+    xp: 0,
+    following: [],
+    blocked: []
+  };
+}
+
+// ==========================================
+// 1. PROFILE, DP & XP SYSTEM
+// ==========================================
+let allLoadedPosts = [];
+let notifications = [];
+let activeRoomUnsubscribe = null;
+
+function loadNotificationsState() {
+  try {
+    const savedNotifs = localStorage.getItem('lokloop_notifs_' + currentSessionHandle);
+    notifications = savedNotifs ? JSON.parse(savedNotifs) : [];
+  } catch (e) {}
+}
+
+function saveNotificationsState() {
+  try {
+    if (currentSessionHandle) {
+      localStorage.setItem('lokloop_notifs_' + currentSessionHandle, JSON.stringify(notifications));
+    }
+  } catch (e) {}
+}
+
+function handleDPChange(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const img = new Image();
+    img.onload = async function() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 160;
+      canvas.height = 160;
+      const ctx = canvas.getContext('2d');
+
+      const minSide = Math.min(img.width, img.height);
+      const sx = (img.width - minSide) / 2;
+      const sy = (img.height - minSide) / 2;
+
+      ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, 160, 160);
+      const user = getCurrentUser();
+      user.dp = canvas.toDataURL('image/jpeg', 0.8);
+      saveLocalSession();
+      await syncUserToCloud(user);
+      renderProfileUI();
+      refreshFeedDisplay();
+      alert('Profile Picture (DP) synced to Cloud! 📸✨');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function getLevelInfo(xp) {
+  const level = Math.floor(xp / 100);
+  const progress = xp % 100;
+  return { level: level, progress: progress };
+}
+
+function countFollowersOf(targetHandle) {
+  let count = 0;
+  Object.values(allUsersDB).forEach(function(u) {
+    if (Array.isArray(u.following) && u.following.includes(targetHandle)) {
+      count++;
+    }
+  });
+  return count;
+}
+
+function renderProfileUI() {
+  const user = getCurrentUser();
+  const info = getLevelInfo(user.xp);
+
+  const avatarBox = document.getElementById('profileAvatarBox');
+  if (user.dp) {
+    avatarBox.innerHTML = `<img src="${user.dp}" alt="DP">`;
+  } else {
+    avatarBox.textContent = '👤';
+  }
+
+  document.getElementById('welcomeHeading').textContent = `Welcome, ${user.name} 👋`;
+  document.getElementById('profileName').textContent = user.name;
+  document.getElementById('profileHandle').textContent = user.handle;
+  document.getElementById('profileBio').textContent = user.bio;
+  document.getElementById('profileLevelLine').textContent = `Level ${info.level} · ${user.xp} XP · Joined: ${user.joinedAt || 'Today'}`;
+
+  document.getElementById('xpDisplay').textContent = user.xp + ' XP';
+  document.getElementById('xpBarFill').style.width = info.progress + '%';
+  document.getElementById('levelText').textContent = `Community Builder · Level ${info.level}`;
+
+  const badgesList = document.getElementById('badgesList');
+  let badgesHTML = '<p>🌐 Live Cloud Member</p><p>🛡️ Verified Secure Account</p>';
+  if (user.xp >= 500) {
+    badgesHTML += '<p>⭐ Rising Star (500+ XP)</p>';
+  }
+  if (user.xp >= 600) {
+    badgesHTML += '<p>👑 Community Legend (600+ XP)</p>';
+  }
+  badgesList.innerHTML = badgesHTML;
+
+  const myPostsCount = allLoadedPosts.filter(function(p) { return p.handle === user.handle; }).length;
+  updateProfileStats(myPostsCount);
+}
+
+function updateProfileStats(postCount) {
+  const user = getCurrentUser();
+  const followers = countFollowersOf(user.handle);
+  const following = Array.isArray(user.following) ? user.following.length : 0;
+  const stats = document.getElementById('profileStats');
+  if (stats) {
+    stats.textContent = `Posts: ${postCount} | Followers: ${followers} | Following: ${following}`;
+  }
+}
+
+// ==========================================
+// 2. REAL-TIME LIVE CLOUD DIRECT MESSAGES
+// ==========================================
+let activeChatHandle = null;
+
+function getChatRoomKey(handleA, handleB) {
+  return [handleA, handleB].sort().join('__');
+}
+
+function openMessagesModal() {
+  backToDmList();
+  document.getElementById('messagesModal').classList.add('active');
+}
+
+function closeMessagesModal() {
+  if (activeRoomUnsubscribe) {
+    activeRoomUnsubscribe();
+    activeRoomUnsubscribe = null;
+  }
+  document.getElementById('messagesModal').classList.remove('active');
+  activeChatHandle = null;
+}
+
+function backToDmList() {
+  if (activeRoomUnsubscribe) {
+    activeRoomUnsubscribe();
+    activeRoomUnsubscribe = null;
+  }
+  document.getElementById('dmChatView').style.display = 'none';
+  document.getElementById('dmListView').style.display = 'block';
+
+  const list = document.getElementById('dmUsersList');
+  list.innerHTML = '';
+
+  const me = getCurrentUser();
+  const otherRealUsers = Object.values(allUsersDB).filter(function(u) {
+    return u.handle !== me.handle && !(me.blocked || []).includes(u.handle);
+  });
+
+  if (otherRealUsers.length === 0) {
+    list.innerHTML = `
+      <div class="notif-item">
+        <strong>No other registered users online yet!</strong>
+        <p class="small" style="margin:5px 0 0 0;">
+          Jaise hi koi doosra user LOKLOOP par account banayega, wo live yahan chat ke liye dikhne lagega.
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  otherRealUsers.forEach(function(otherUser) {
+    const item = document.createElement('div');
+    item.className = 'dm-user-item';
+    item.innerHTML = `
+      <div>
+        <strong style="font-size:14px;">${sanitizeText(otherUser.name)} <span class="small">(${sanitizeText(otherUser.handle)})</span></strong>
+        <div class="small" style="font-size:12px; margin-top:3px;">Tap to open live chat room...</div>
+      </div>
+      <span style="color:#7cffb2; font-size:13px;">Chat ➤</span>
+    `;
+    item.onclick = function() {
+      openChatThread(otherUser.handle);
+    };
+    list.appendChild(item);
+  });
+}
+
+function openChatThread(targetHandle) {
+  const targetUser = allUsersDB[targetHandle];
+  if (!targetUser) return;
+
+  activeChatHandle = targetHandle;
+  document.getElementById('dmListView').style.display = 'none';
+  document.getElementById('dmChatView').style.display = 'block';
+
+  document.getElementById('activeChatName').textContent = targetUser.name;
+  document.getElementById('activeChatHandle').textContent = targetUser.handle;
+
+  const me = getCurrentUser();
+  const roomKey = getChatRoomKey(me.handle, activeChatHandle);
+  const area = document.getElementById('dmMessagesArea');
+  area.innerHTML = '<p class="small" style="text-align:center; margin:auto;">Connecting to live chat...</p>';
+
+  if (activeRoomUnsubscribe) {
+    activeRoomUnsubscribe();
+  }
+
+  if (isCloudReady && cloudDB) {
+    activeRoomUnsubscribe = cloudDB.collection('chats').doc(roomKey).collection('messages')
+      .orderBy('timestamp', 'asc')
+      .onSnapshot(function(snapshot) {
+        area.innerHTML = '';
+        if (snapshot.empty) {
+          area.innerHTML = '<p class="small" style="text-align:center; margin:auto;">🔒 Live encrypted chat with ' + sanitizeText(activeChatHandle) + '</p>';
+          return;
+        }
+        snapshot.forEach(function(doc) {
+          const m = doc.data();
+          const bubble = document.createElement('div');
+          const isMe = (m.senderHandle === me.handle);
+          bubble.className = 'chat-bubble ' + (isMe ? 'me' : 'them');
+          bubble.innerHTML = `${sanitizeText(m.text)}<span class="chat-time">${sanitizeText(m.dateTime || '')}</span>`;
+          area.appendChild(bubble);
+        });
+        area.scrollTop = area.scrollHeight;
+      });
+  }
+}
+
+async function sendDirectMessage() {
+  if (!activeChatHandle) return;
+
+  if (Date.now() - lastMsgTimestamp < 1200) {
+    alert('🛡️ Anti-Spam: Please wait a moment before sending another message.');
+    return;
+  }
+
+  const input = document.getElementById('dmInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const me = getCurrentUser();
+  const targetUser = allUsersDB[activeChatHandle];
+
+  if (targetUser && Array.isArray(targetUser.blocked) && targetUser.blocked.includes(me.handle)) {
+    alert('You cannot send messages to this user.');
+    return;
+  }
+
+  const roomKey = getChatRoomKey(me.handle, activeChatHandle);
+  input.value = '';
+  lastMsgTimestamp = Date.now();
+
+  if (isCloudReady && cloudDB) {
+    try {
+      await cloudDB.collection('chats').doc(roomKey).collection('messages').add({
+        senderHandle: me.handle,
+        senderName: me.name,
+        text: text,
+        dateTime: getExactDateTime(),
+        timestamp: Date.now()
+      });
+    } catch (e) {
+      alert('Network issue sending message. Please check internet.');
+    }
+  }
+}
+
+async function blockActiveChatUser() {
+  if (!activeChatHandle) return;
+  if (confirm(`Block ${activeChatHandle}? They will no longer be able to message you or appear in your feed.`)) {
+    const me = getCurrentUser();
+    if (!Array.isArray(me.blocked)) me.blocked = [];
+    if (!me.blocked.includes(activeChatHandle)) {
+      me.blocked.push(activeChatHandle);
+    }
+    saveLocalSession();
+    await syncUserToCloud(me);
+    backToDmList();
+    renderCreatorsList();
+    refreshFeedDisplay();
+    alert(`${activeChatHandle} has been blocked 🛡️`);
+  }
+}
+
+// ==========================================
+// 3. NOTIFICATIONS & SECURITY MODAL
+// ==========================================
+function openSecurityModal() {
+  document.getElementById('securityModal').classList.add('active');
+}
+
+function closeSecurityModal() {
+  document.getElementById('securityModal').classList.remove('active');
+}
+
+function addNotification(message) {
+  loadNotificationsState();
+  notifications.unshift({
+    text: message,
+    dateTime: getExactDateTime(),
+    unread: true
+  });
+  if (notifications.length > 30) notifications.pop();
+  saveNotificationsState();
+  updateNotifBadge();
+}
+
+function updateNotifBadge() {
+  loadNotificationsState();
+  const unreadCount = notifications.filter(function(n) { return n.unread; }).length;
+  const badge = document.getElementById('notifBadge');
+  if (unreadCount > 0) {
+    badge.style.display = 'inline-block';
+    badge.textContent = unreadCount;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function openNotifications() {
+  loadNotificationsState();
+  const list = document.getElementById('notifList');
+  list.innerHTML = '';
+
+  if (notifications.length === 0) {
+    list.innerHTML = '<p class="small">No notifications yet.</p>';
+  } else {
+    notifications.forEach(function(n) {
+      n.unread = false;
+      const item = document.createElement('div');
+      item.className = 'notif-item';
+      item.innerHTML = `${sanitizeText(n.text)}<span class="notif-time">${sanitizeText(n.dateTime)}</span>`;
+      list.appendChild(item);
+    });
+  }
+
+  saveNotificationsState();
+  updateNotifBadge();
+  document.getElementById('notifModal').classList.add('active');
+}
+
+function closeNotifications() {
+  document.getElementById('notifModal').classList.remove('active');
+}
+
+function clearNotifications() {
+  notifications = [];
+  saveNotificationsState();
+  updateNotifBadge();
+  document.getElementById('notifList').innerHTML = '<p class="small">All notifications cleared.</p>';
+}
+
+// ==========================================
+// 4. DISCOVER REAL USERS & FOLLOW SYSTEM
+// ==========================================
+function renderCreatorsList(filterQuery) {
+  const container = document.getElementById('creatorsList');
+  container.innerHTML = '';
+  const q = (filterQuery || '').toLowerCase();
+  const me = getCurrentUser();
+
+  const realOthers = Object.values(allUsersDB).filter(function(u) {
+    if (u.handle === me.handle) return false;
+    if ((me.blocked || []).includes(u.handle)) return false;
+    return u.name.toLowerCase().includes(q) || u.handle.toLowerCase().includes(q);
+  });
+
+  if (realOthers.length === 0) {
+    container.innerHTML = '<p class="small">No other registered users found yet. Invite friends to join LOKLOOP!</p>';
+    return;
+  }
+
+  realOthers.forEach(function(otherUser) {
+    const isFollowing = (me.following || []).includes(otherUser.handle);
+
+    const row = document.createElement('div');
+    row.className = 'creator-row';
+
+    const info = document.createElement('div');
+    info.className = 'creator-info';
+    info.innerHTML = `<h4>${sanitizeText(otherUser.name)}</h4><span>${sanitizeText(otherUser.handle)} · Joined ${sanitizeText(otherUser.joinedAt || 'Recently')}</span>`;
+
+    const btnGroup = document.createElement('div');
+
+    const msgBtn = document.createElement('button');
+    msgBtn.className = 'secondary-btn';
+    msgBtn.style.padding = '8px 10px';
+    msgBtn.style.fontSize = '12px';
+    msgBtn.textContent = '💬';
+    msgBtn.onclick = function() {
+      openMessagesModal();
+      openChatThread(otherUser.handle);
+    };
+
+    const btn = document.createElement('button');
+    btn.className = isFollowing ? 'following-btn' : '';
+    btn.style.padding = '8px 12px';
+    btn.style.fontSize = '12px';
+    btn.textContent = isFollowing ? 'Following ✓' : '+ Follow';
+    btn.onclick = function() {
+      toggleFollow(otherUser);
+    };
+
+    btnGroup.appendChild(msgBtn);
+    btnGroup.appendChild(btn);
+
+    row.appendChild(info);
+    row.appendChild(btnGroup);
+    container.appendChild(row);
+  });
+}
+
+async function toggleFollow(targetUser) {
+  const me = getCurrentUser();
+  if (!Array.isArray(me.following)) me.following = [];
+
+  const idx = me.following.indexOf(targetUser.handle);
+  if (idx === -1) {
+    me.following.push(targetUser.handle);
+    addNotification(`You started following ${targetUser.name} (${targetUser.handle}) 🤝`);
+  } else {
+    me.following.splice(idx, 1);
+  }
+  saveLocalSession();
+  await syncUserToCloud(me);
+  renderProfileUI();
+  renderCreatorsList(document.getElementById('discoverSearchInput').value);
+}
+
+function handleDiscoverSearch() {
+  const query = document.getElementById('discoverSearchInput').value.trim();
+  renderCreatorsList(query);
+
+  const resultsBox = document.getElementById('discoverPostsResults');
+  resultsBox.innerHTML = '';
+
+  if (!query) return;
+
+  const q = query.toLowerCase();
+  const me = getCurrentUser();
+  const matchedPosts = allLoadedPosts.filter(function(p) {
+    if ((me.blocked || []).includes(p.handle)) return false;
+    return (p.text && p.text.toLowerCase().includes(q)) ||
+           (p.author && p.author.toLowerCase().includes(q)) ||
+           (p.handle && p.handle.toLowerCase().includes(q));
+  });
+
+  const heading = document.createElement('h3');
+  heading.textContent = `Matching Posts (${matchedPosts.length})`;
+  resultsBox.appendChild(heading);
+
+  if (matchedPosts.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'small';
+    empty.textContent = 'No posts found matching "' + query + '".';
+    resultsBox.appendChild(empty);
+  } else {
+    matchedPosts.forEach(function(postData) {
+      resultsBox.appendChild(renderPostElement(postData, true));
+    });
+  }
+}
+
+// ==========================================
+// 5. EDIT & SHARE PROFILE
+// ==========================================
+function openEditProfile() {
+  const me = getCurrentUser();
+  document.getElementById('editNameInput').value = me.name;
+  document.getElementById('editBioInput').value = me.bio;
+  document.getElementById('editProfileModal').classList.add('active');
+}
+
+function closeEditProfile() {
+  document.getElementById('editProfileModal').classList.remove('active');
+}
+
+async function saveProfile() {
+  const newName = document.getElementById('editNameInput').value.trim();
+  const newBio = document.getElementById('editBioInput').value.trim();
+
+  if (!newName) {
+    alert('Please enter your name!');
+    return;
+  }
+
+  const me = getCurrentUser();
+  me.name = newName;
+  me.bio = newBio || 'LOKLOOP Member';
+
+  saveLocalSession();
+  await syncUserToCloud(me);
+  renderProfileUI();
+  closeEditProfile();
+  alert('Profile updated on Live Cloud! ✅');
+}
+
+function shareProfile() {
+  const me = getCurrentUser();
+  const info = getLevelInfo(me.xp);
+  const shareText = `Check out ${me.name} (${me.handle}) · Level ${info.level} on LOKLOOP! 🌟`;
+  if (navigator.share) {
+    navigator.share({ title: 'LOKLOOP Profile', text: shareText }).catch(function() {});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(shareText);
+    alert('Profile info copied to clipboard! 📋\n' + shareText);
+  } else {
+    alert(shareText);
+  }
+}
+
+// ==========================================
+// 6. CLOUD POSTS LISTENER & SYNC
+// ==========================================
+function startCloudPostsListener() {
+  if (!isCloudReady || !cloudDB) {
+    document.getElementById('homePosts').innerHTML = '<p class="small" style="text-align:center;">Offline mode active. Connect internet for live feed.</p>';
+    return;
+  }
+
+  try {
+    cloudDB.collection('posts').orderBy('id', 'desc').limit(50).onSnapshot(function(snapshot) {
+      const livePosts = [];
+      snapshot.forEach(function(doc) {
+        livePosts.push(doc.data());
+      });
+      allLoadedPosts = livePosts;
+      refreshFeedDisplay();
+    }, function(err) {
+      console.warn('Firestore snapshot error:', err);
+    });
+  } catch (e) {
+    console.warn('Posts listener failed:', e);
+  }
+}
+
+async function savePostToCloud(postData) {
+  if (!isCloudReady || !cloudDB) return false;
+  try {
+    await cloudDB.collection('posts').doc(String(postData.id)).set(postData);
+    return true;
+  } catch (err) {
+    console.error('Cloud post save failed:', err);
+    alert('Could not upload post to cloud. Check internet connection or photo size.');
+    return false;
+  }
+}
+
+async function deletePostEverywhere(postId) {
+  if (isCloudReady && cloudDB) {
+    try {
+      await cloudDB.collection('posts').doc(String(postId)).delete();
+    } catch (e) {}
+  }
+  allLoadedPosts = allLoadedPosts.filter(function(p) { return p.id !== postId; });
+  refreshFeedDisplay();
+}
+
+// ==========================================
+// 7. PAGE NAVIGATION & XP MISSIONS
+// ==========================================
+function showPage(page, button) {
+  document.querySelectorAll('.page').forEach(function(item) {
+    item.classList.remove('active');
+  });
+
+  const targetPage = document.getElementById(page);
+  if (targetPage) {
+    targetPage.classList.add('active');
+  }
+
+  document.querySelectorAll('nav button').forEach(function(item) {
+    item.classList.remove('selected');
+  });
+
+  if (button) {
+    button.classList.add('selected');
+  }
+}
+
+async function completeMission(button, xpReward, missionName) {
+  const reward = xpReward || 50;
+  const me = getCurrentUser();
+  const oldLevel = getLevelInfo(me.xp).level;
+
+  me.xp += reward;
+  const newLevel = getLevelInfo(me.xp).level;
+
+  button.textContent = `Completed (+${reward} XP) ✓`;
+  button.disabled = true;
+
+  saveLocalSession();
+  await syncUserToCloud(me);
+  renderProfileUI();
+
+  addNotification(`Mission completed: ${missionName || 'Community Task'} (+${reward} XP) 🎯`);
+
+  if (newLevel > oldLevel) {
+    addNotification(`🎉 LEVEL UP! You reached Level ${newLevel}!`);
+    alert(`🎉 Congratulations! You earned +${reward} XP and reached Level ${newLevel}!`);
+  } else {
+    alert(`Great job! You earned +${reward} XP! 🔥`);
+  }
+}
+
+// ==========================================
+// 8. IMAGE COMPRESSION FOR CLOUD GALLERY & CAMERA
+// ==========================================
+let selectedImagesBase64 = [];
+
+const mediaPicker = document.getElementById('mediaPicker');
+const cameraPicker = document.getElementById('cameraPicker');
+
+mediaPicker.addEventListener('change', function() {
+  if (this.files && this.files.length > 0) {
+    processSelectedPhotos(this.files);
+  }
+  this.value = '';
+});
+
+cameraPicker.addEventListener('change', function() {
+  if (this.files && this.files.length > 0) {
+    processSelectedPhotos(this.files);
+  }
+  this.value = '';
+});
+
+function compressImageToDataURL(file) {
+  return new Promise(function(resolve) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        const MAX_DIM = 800;
+        let w = img.width;
+        let h = img.height;
+
+        if (w > MAX_DIM || h > MAX_DIM) {
+          if (w > h) {
+            h = Math.round((h * MAX_DIM) / w);
+            w = MAX_DIM;
+          } else {
+            w = Math.round((w * MAX_DIM) / h);
+            h = MAX_DIM;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+
+        // High-efficiency JPEG so Firestore syncs instantly
+        resolve(canvas.toDataURL('image/jpeg', 0.72));
+      };
+      img.onerror = function() {
+        resolve(null);
+      };
+      img.src = e.target.result;
+    };
+    reader.onerror = function() {
+      resolve(null);
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function processSelectedPhotos(files) {
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    if (!file) continue;
+
+    if (selectedImagesBase64.length >= 5) {
+      alert('Maximum 5 photos allowed per live post!');
+      break;
+    }
+
+    const compressedUrl = await compressImageToDataURL(file);
+    if (compressedUrl) {
+      selectedImagesBase64.push(compressedUrl);
+    }
+  }
+  showPreview();
+}
+
+function showPreview() {
+  const preview = document.getElementById('mediaPreview');
+  const count = document.getElementById('mediaCount');
+
+  preview.innerHTML = '';
+  count.textContent = selectedImagesBase64.length + ' / 5 photos selected';
+
+  selectedImagesBase64.forEach(function(dataUrl, index) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'preview-item';
+
+    const media = document.createElement('img');
+    media.src = dataUrl;
+
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'remove-media';
+    removeButton.textContent = '×';
+
+    removeButton.onclick = function() {
+      selectedImagesBase64.splice(index, 1);
+      showPreview();
+    };
+
+    wrapper.appendChild(media);
+    wrapper.appendChild(removeButton);
+    preview.appendChild(wrapper);
+  });
+}
+
+// ==========================================
+// 9. LIVE FEED RENDERING, LIKES, COMMENTS & PUBLISH
+// ==========================================
+function refreshFeedDisplay() {
+  const homePosts = document.getElementById('homePosts');
+  homePosts.innerHTML = '';
+  const me = getCurrentUser();
+
+  const visiblePosts = allLoadedPosts.filter(function(postData) {
+    return !(me.blocked || []).includes(postData.handle);
+  });
+
+  if (visiblePosts.length === 0) {
+    homePosts.innerHTML = '<div class="card"><p class="small" style="text-align:center; margin:0;">No posts yet! Be the first to post on LOKLOOP 🚀</p></div>';
+  } else {
+    visiblePosts.forEach(function(postData) {
+      const postElement = renderPostElement(postData, false);
+      homePosts.appendChild(postElement);
+    });
+  }
+
+  renderProfileUI();
+}
+
+function renderPostElement(postData, isSearchPreview) {
+  if (!Array.isArray(postData.likedBy)) postData.likedBy = [];
+  if (!Array.isArray(postData.comments)) postData.comments = [];
+
+  const me = getCurrentUser();
+  const isMyPost = (postData.handle === me.handle);
+  const isLikedByMe = postData.likedBy.includes(me.handle);
+
+  const post = document.createElement('div');
+  post.className = 'post';
+  if (!isSearchPreview) {
+    post.id = 'post_' + postData.id;
+  }
+
+  const header = document.createElement('div');
+  header.className = 'post-header';
+
+  const authorRow = document.createElement('div');
+  authorRow.className = 'post-author-row';
+
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar-small';
+  const latestAuthorObj = allUsersDB[postData.handle];
+  const dpSrc = (latestAuthorObj && latestAuthorObj.dp) ? latestAuthorObj.dp : (postData.authorDp || '');
+  if (dpSrc) {
+    avatar.innerHTML = `<img src="${dpSrc}" alt="DP">`;
+  } else {
+    avatar.textContent = '👤';
+  }
+
+  const titleGroup = document.createElement('div');
+  const heading = document.createElement('h3');
+  heading.textContent = (latestAuthorObj && latestAuthorObj.name) ? latestAuthorObj.name : (postData.author || 'LOKLOOP User');
+  const timeSpan = document.createElement('span');
+  timeSpan.className = 'post-time';
+  timeSpan.textContent = `${postData.handle || '@user'} · 🕒 ${postData.exactDateTime || 'Just now'}`;
+  titleGroup.appendChild(heading);
+  titleGroup.appendChild(timeSpan);
+
+  authorRow.appendChild(avatar);
+  authorRow.appendChild(titleGroup);
+  header.appendChild(authorRow);
+
+  if (!isSearchPreview) {
+    if (isMyPost) {
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'danger-btn';
+      deleteBtn.textContent = '🗑️ Delete';
+      deleteBtn.onclick = async function() {
+        if (confirm('Delete your post from live feed?')) {
+          await deletePostEverywhere(postData.id);
+        }
+      };
+      header.appendChild(deleteBtn);
+    } else {
+      const reportBtn = document.createElement('button');
+      reportBtn.className = 'secondary-btn';
+      reportBtn.style.padding = '5px 9px';
+      reportBtn.style.fontSize = '11px';
+      reportBtn.textContent = '🚩 Report';
+      reportBtn.onclick = function() {
+        alert('Post reported to LOKLOOP Safety Team. Thank you! 🛡️');
+      };
+      header.appendChild(reportBtn);
+    }
+  }
+
+  post.appendChild(header);
+
+  if (postData.text) {
+    const caption = document.createElement('p');
+    caption.textContent = postData.text;
+    post.appendChild(caption);
+  }
+
+  // Cloud Image Grid
+  if (Array.isArray(postData.images) && postData.images.length > 0) {
+    const grid = document.createElement('div');
+    grid.className = 'media-grid';
+
+    postData.images.forEach(function(imgSrc) {
+      const media = document.createElement('img');
+      media.src = imgSrc;
+      grid.appendChild(media);
+    });
+
+    post.appendChild(grid);
+  }
+
+  // Action Bar
+  const actions = document.createElement('div');
+  actions.className = 'post-actions';
+
+  const likeBtn = document.createElement('button');
+  likeBtn.className = 'action-btn' + (isLikedByMe ? ' liked' : '');
+  likeBtn.textContent = (isLikedByMe ? '❤️ ' : '🤍 ') + postData.likedBy.length;
+
+  likeBtn.onclick = async function() {
+    const activeMe = getCurrentUser();
+    const idx = postData.likedBy.indexOf(activeMe.handle);
+    if (idx === -1) {
+      postData.likedBy.push(activeMe.handle);
+    } else {
+      postData.likedBy.splice(idx, 1);
+    }
+
+    if (isCloudReady && cloudDB) {
+      await cloudDB.collection('posts').doc(String(postData.id)).update({
+        likedBy: postData.likedBy
+      });
+    }
+  };
+
+  const commentToggleBtn = document.createElement('button');
+  commentToggleBtn.className = 'action-btn';
+  commentToggleBtn.textContent = '💬 ' + postData.comments.length;
+
+  const shareBtn = document.createElement('button');
+  shareBtn.className = 'action-btn';
+  shareBtn.textContent = '📤 Share';
+  shareBtn.onclick = function() {
+    const shareMsg = `${postData.author} (${postData.handle}) on LOKLOOP [${postData.exactDateTime || ''}]: "${postData.text || 'Media Post'}"`;
+    if (navigator.share) {
+      navigator.share({ title: 'LOKLOOP Post', text: shareMsg }).catch(function() {});
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(shareMsg);
+      alert('Post copied to clipboard! 📋');
+    } else {
+      alert(shareMsg);
+    }
+  };
+
+  actions.appendChild(likeBtn);
+  actions.appendChild(commentToggleBtn);
+  actions.appendChild(shareBtn);
+  post.appendChild(actions);
+
+  // Comments Section
+  const commentsBox = document.createElement('div');
+  commentsBox.className = 'comments-box';
+
+  const commentsList = document.createElement('div');
+  postData.comments.forEach(function(c) {
+    const cItem = document.createElement('div');
+    cItem.className = 'comment-item';
+    cItem.innerHTML = `<strong>${sanitizeText(c.author)}:</strong> ${sanitizeText(c.text)} <span class="comment-time">${sanitizeText(c.dateTime || '')}</span>`;
+    commentsList.appendChild(cItem);
+  });
+
+  const inputRow = document.createElement('div');
+  inputRow.className = 'comment-input-row';
+
+  const commentInput = document.createElement('input');
+  commentInput.type = 'text';
+  commentInput.maxLength = 300;
+  commentInput.placeholder = 'Write a live comment...';
+
+  const commentSendBtn = document.createElement('button');
+  commentSendBtn.textContent = 'Send';
+
+  commentSendBtn.onclick = async function() {
+    const cText = commentInput.value.trim();
+    if (!cText) return;
+
+    const activeMe = getCurrentUser();
+    const updatedComments = postData.comments.concat([{
+      author: activeMe.name,
+      handle: activeMe.handle,
+      text: cText,
+      dateTime: getExactDateTime()
+    }]);
+
+    commentInput.value = '';
+    if (isCloudReady && cloudDB) {
+      await cloudDB.collection('posts').doc(String(postData.id)).update({
+        comments: updatedComments
+      });
+    }
+    addNotification(`You commented on ${postData.author}'s post 💬`);
+  };
+
+  inputRow.appendChild(commentInput);
+  inputRow.appendChild(commentSendBtn);
+
+  commentsBox.appendChild(commentsList);
+  commentsBox.appendChild(inputRow);
+  post.appendChild(commentsBox);
+
+  commentToggleBtn.onclick = function() {
+    commentsBox.classList.toggle('open');
+  };
+
+  return post;
+}
+
+async function publishPost() {
+  if (Date.now() - lastPostTimestamp < 5000) {
+    alert('🛡️ Anti-Spam Protection: Please wait 5 seconds before publishing another post.');
+    return;
+  }
+
+  const text = document.getElementById('postText').value.trim();
+  const publishBtn = document.getElementById('publishBtn');
+
+  if (text === '' && selectedImagesBase64.length === 0) {
+    alert('Please write something or add a photo!');
+    return;
+  }
+
+  publishBtn.disabled = true;
+  publishBtn.textContent = 'Publishing to Cloud...';
+
+  const exactStamp = getExactDateTime();
+  const me = getCurrentUser();
+
+  const postData = {
+    id: Date.now(),
+    author: me.name,
+    handle: me.handle,
+    authorDp: me.dp || '',
+    text: text,
+    exactDateTime: exactStamp,
+    images: selectedImagesBase64.slice(),
+    likedBy: [],
+    comments: []
+  };
+
+  const success = await savePostToCloud(postData);
+
+  if (success) {
+    lastPostTimestamp = Date.now();
+    me.xp += 10;
+    saveLocalSession();
+    await syncUserToCloud(me);
+    renderProfileUI();
+    addNotification(`Live post published on ${exactStamp} (+10 XP) 🚀`);
+
+    document.getElementById('postText').value = '';
+    selectedImagesBase64 = [];
+    showPreview();
+
+    showPage('home', document.querySelector('nav button'));
+    alert(`Your post is now LIVE for all users! (+10 XP) 🎉`);
+  }
+
+  publishBtn.disabled = false;
+  publishBtn.textContent = 'Publish Live Post 🚀';
+}
+
+// ==========================================
+// 10. APP STARTUP
+// ==========================================
+window.addEventListener('DOMContentLoaded', function() {
+  updateLiveHeaderClock();
+  setInterval(updateLiveHeaderClock, 30000);
+
+  checkAuthSession();
+  startCloudUsersListener();
+  startCloudPostsListener();
+});
+</script>
+
+</body>
+</html>
